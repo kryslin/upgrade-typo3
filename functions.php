@@ -19,14 +19,14 @@ function run($command, $return = false)
 
     $process1 = new Process('echo "------------------>>> ' . $command . '"');
     $process1->setTty(true);
-    $process1->setTimeout(3600);
+    $process1->setTimeout(86400);
     $process1->run();
 
     $process = new Process($commandWithDirChange);
     if (!$return) {
         $process->setTty(true);
     }
-    $process->setTimeout(3600);
+    $process->setTimeout(86400);
     $process->run();
 
     if ($return) {
@@ -55,6 +55,7 @@ function getUpgradeBranches()
         }
 
         $version = str_replace('upgrade_','', $branchRaw);
+        $version = str_pad($version, 3, '0', STR_PAD_LEFT);
         $branches[$version] = $branchRaw;
     }
 
@@ -66,7 +67,7 @@ function getUpgradeBranches()
 
 function getDbConfiguration()
 {
-    $configurationJson = run('php ./vendor/bin/typo3cms configuration:showactive DB --json', true);
+    $configurationJson = run(PHP_BINARY . ' vendor/bin/typo3cms configuration:showactive DB --json', true);
     // cleanup depreciations and any other stuff before json
     $configurationJson = substr($configurationJson, strpos($configurationJson,'{'), strlen($configurationJson));
     $configuration = json_decode($configurationJson, true);
@@ -100,4 +101,18 @@ function dbUpdate($filePath)
 
     $configuration = getDbConfiguration();
     run('mysql -u ' . $configuration['username'] . ' -p' . $configuration['password'] . ' ' . $configuration['database'] . ' < ' . $filePathAbs);
+}
+
+function doRun($filePath)
+{
+    if (!file_exists($filePath)) {
+        return;
+    }
+
+    $filePathAbs = realpath($filePath);
+    foreach (explode("\n", file_get_contents($filePathAbs)) as $command) {
+        if ($command) {
+            run($command);
+        }
+    }
 }

@@ -34,10 +34,13 @@ for more insights).
 If you have some project specific SQL then put it in ``.upgrade/config/project/[branch part].sql`` (for example ``.upgrade/config/project/76.sql``)
 If you have some instance specific SQL then put it in ``.upgrade/config/instances/[instance name]/[branch part].sql``
 
+If you have some project specific CLI command then put his execution paths in txt file ``.upgrade/run/project/[branch part].txt`` (for example ``.upgrade/run/project/76.txt``). Execution paths should be separated by new line.
+If you have some instance specific CLI command then put his execution paths in txt file ``.upgrade/config/instances/[instance name]/[branch part].txt``. Execution paths should be separated by new line.
+
 The ``[branch part]`` is taken from branch name. If branch name is "upgrade_76" then ``[branch part]`` is equal to ``76``.
 The ``[instance name]`` is taken from INSTANCE env var. Make sure its set in .env file of your project.
 
-Run upgrade in your TYPO3 root directory
+Run upgrade in your TYPO3 root directory. You can force composer version by adding option in command --composer=1.10.19
 ``./.upgrade/vendor/bin/typo3-upgrade.php``
 
 Changelog

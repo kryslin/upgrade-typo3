@@ -17,8 +17,13 @@ clearCache();
 
 // get composer and run initial install
 if (!file_exists('composer.phar')) {
+    $composer = getopt(null, ["composer:"]);
+    $version = '';
+    if (!empty($composer['composer'])) {
+        $version = ' --version=' . $composer['composer'];
+    }
     copy('https://getcomposer.org/installer', 'composer-setup.php');
-    exec('php composer-setup.php');
+    exec('php composer-setup.php' . $version);
     unlink('composer-setup.php');
 }
 
@@ -27,6 +32,7 @@ $upgradeBranches = getUpgradeBranches();
 $isFirst = true;
 
 foreach ($upgradeBranches as $numericVersion => $branch) {
+    $numericVersion = (int)$numericVersion;
     run('echo "---------------------- git checkout ' . $branch . '"');
     run('git reset --hard');
     run('git checkout ' . $branch);
@@ -34,12 +40,19 @@ foreach ($upgradeBranches as $numericVersion => $branch) {
     run('git reset --hard');
 
     clearCache();
-    run('php composer.phar install');
+    run(PHP_BINARY . ' composer.phar install');
     clearCache();
 
-    run('./vendor/bin/typo3cms database:updateschema "*.add,*.change"');
+    run(PHP_BINARY . ' vendor/bin/typo3cms database:updateschema "*.add,*.change"');
+    doRun(T3U_UPGRADE_DIR . '/run/project/' . $numericVersion . '.txt');
+    doRun(T3U_UPGRADE_DIR . '/run/instances/' . $instance . '/' . $numericVersion . '.txt');
     if (!$isFirst) {
-        run('./vendor/bin/typo3cms upgrade:all');
+        if ($numericVersion > 95) {
+            run(PHP_BINARY  . ' vendor/bin/typo3cms upgrade:prepare');
+            run(PHP_BINARY . ' vendor/bin/typo3cms upgrade:run all --no-interaction');
+        } else {
+            run(PHP_BINARY . ' vendor/bin/typo3cms upgrade:all');
+        }
     }
 
     dbUpdate(__DIR__ . '/sql/' . $numericVersion . '.sql');
